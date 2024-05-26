@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ajouter des Fichiers</title>
+    <!-- Import Firebase App (the core Firebase SDK) -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { getDatabase, ref as dbRef, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkll0uPJT7dKH-jVMGktrcYFWqSoSRLZc",
+            authDomain: "firo-29128.firebaseapp.com",
+            projectId: "firo-29128",
+            storageBucket: "firo-29128.appspot.com",
+            messagingSenderId: "615383698220",
+            appId: "1:615383698220:web:2ad33e20e11bc2aadc3a89",
+            measurementId: "G-MDRPD4YBJ5",
+            databaseURL: "https://firo-29128-default-rtdb.firebaseio.com/",
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const database = getDatabase(app);
+
+        let isUploading = false; // Flag to prevent multiple uploads at the same time
+
+        // Upload file function
+        async function uploadFile() {
+            if (isUploading) {
+                alert("Un fichier est déjà en cours de téléchargement. Veuillez patienter.");
+                return;
+            }
+            isUploading = true;
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (file) {
+                const storageRef = ref(storage, 'files/' + file.name);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        // Progress
+                    },
+                    (error) => {
+                        console.error('Échec du téléchargement:', error);
+                        isUploading = false;
+                    },
+                    async () => {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        await push(dbRef(database, 'files'), {
+                            name: file.name,
+                            url: downloadURL
+                        });
+                        isUploading = false;
+                        displayFiles(); // Refresh file list after upload
+                    }
+                );
+            } else {
+                isUploading = false;
+            }
+        }
+
+        // Display files function
+        function displayFiles() {
+            const fileList = document.getElementById('fileList');
+            const dbFilesRef = dbRef(database, 'files');
+
+            onValue(dbFilesRef, (snapshot) => {
+                fileList.innerHTML = '';
+                snapshot.forEach((childSnapshot) => {
+                    const fileData = childSnapshot.val();
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.textContent = fileData.name;
+                    a.href = fileData.url;
+                    a.download = fileData.name; // Enable download
+                    li.appendChild(a);
+                    fileList.appendChild(li);
+                });
+            });
+        }
+
+        // Make the function accessible globally
+        window.uploadFile = uploadFile;
+        window.displayFiles = displayFiles;
+
+        // Display files on page load
+        window.onload = displayFiles;
+    </script>
+</head>
+
+<body>
+    <h1>Ajouter des Fichiers</h1>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Ajouter des fichiers</button>
+    <h2>Liste des fichiers ajoutés</h2>
+    <ul id="fileList"></ul>
+</body>
+
+</html>
