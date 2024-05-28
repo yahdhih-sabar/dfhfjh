@@ -1,14 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Ajouter des Fichiers</title>
-    <!-- Import Firebase App (the core Firebase SDK) -->
+    <meta charset="UTF-8">
+    <title>Firebase File Upload with Metadata</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        nav a {
+            color: #fff;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .landing {
+            background-color: #e0f7fa;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .landing h1 {
+            margin: 0;
+            font-size: 3em;
+            color: #007bff;
+        }
+
+        .landing p {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #progress {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px;
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        li a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+
+        li a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script type="module">
         // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
-        import { getDatabase, ref as dbRef, push, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.8.1/firebase-app.js";
+        import { getStorage, ref, listAll, getDownloadURL, uploadBytesResumable, getMetadata } from "https://www.gstatic.com/firebasejs/9.8.1/firebase-storage.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -18,89 +140,177 @@
             storageBucket: "firo-29128.appspot.com",
             messagingSenderId: "615383698220",
             appId: "1:615383698220:web:2ad33e20e11bc2aadc3a89",
-            measurementId: "G-MDRPD4YBJ5",
-            databaseURL: "https://firo-29128-default-rtdb.firebaseio.com/",
+            measurementId: "G-MDRPD4YBJ5"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
-        const database = getDatabase(app);
 
-        let isUploading = false; // Flag to prevent multiple uploads at the same time
+        // Define the function to retrieve the list of files and populate authors
+        async function listFiles(filterAuthor = '', filterCategory = '') {
+            const storageRef = ref(storage, 'files/');
+            try {
+                const res = await listAll(storageRef);
+                const fileList = document.getElementById('fileList');
+                const authorSet = new Set();
+                fileList.innerHTML = ''; // Clear the list first
+                for (const itemRef of res.items) {
+                    const metadata = await getMetadata(itemRef);
+                    const author = metadata.customMetadata?.author || '';
+                    const category = metadata.customMetadata?.category || '';
 
-        // Upload file function
-        async function uploadFile() {
-            if (isUploading) {
-                alert("Un fichier est déjà en cours de téléchargement. Veuillez patienter.");
-                return;
-            }
-            isUploading = true;
+                    authorSet.add(author);
 
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-            if (file) {
-                const storageRef = ref(storage, 'files/' + file.name);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        // Progress
-                    },
-                    (error) => {
-                        console.error('Échec du téléchargement:', error);
-                        isUploading = false;
-                    },
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        await push(dbRef(database, 'files'), {
-                            name: file.name,
-                            url: downloadURL
-                        });
-                        isUploading = false;
-                        displayFiles(); // Refresh file list after upload
+                    if ((filterAuthor && author !== filterAuthor) || (filterCategory && category !== filterCategory)) {
+                        continue;
                     }
-                );
-            } else {
-                isUploading = false;
+
+                    const downloadURL = await getDownloadURL(itemRef);
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${itemRef.name} (Author: ${author}, Category: ${category})`;
+                    const link = document.createElement('a');
+                    link.href = downloadURL;
+                    link.textContent = ' (Download)';
+                    listItem.appendChild(link);
+                    fileList.appendChild(listItem);
+                }
+                populateAuthorFilter(authorSet);
+            } catch (error) {
+                console.error('Error listing files:', error);
             }
         }
 
-        // Display files function
-        function displayFiles() {
-            const fileList = document.getElementById('fileList');
-            const dbFilesRef = dbRef(database, 'files');
-
-            onValue(dbFilesRef, (snapshot) => {
-                fileList.innerHTML = '';
-                snapshot.forEach((childSnapshot) => {
-                    const fileData = childSnapshot.val();
-                    const li = document.createElement('li');
-                    const a = document.createElement('a');
-                    a.textContent = fileData.name;
-                    a.href = fileData.url;
-                    a.download = fileData.name; // Enable download
-                    li.appendChild(a);
-                    fileList.appendChild(li);
-                });
+        // Populate author filter dropdown
+        function populateAuthorFilter(authors) {
+            const filterAuthorSelect = document.getElementById('filterAuthorSelect');
+            filterAuthorSelect.innerHTML = '<option value="">All</option>'; // Add "All" option
+            authors.forEach(author => {
+                const option = document.createElement('option');
+                option.value = author;
+                option.textContent = author;
+                filterAuthorSelect.appendChild(option);
             });
         }
 
-        // Make the function accessible globally
-        window.uploadFile = uploadFile;
-        window.displayFiles = displayFiles;
+        // Call the listFiles function to display the list of files on page load
+        window.onload = () => listFiles();
 
-        // Display files on page load
-        window.onload = displayFiles;
+        // Define the uploadFile function globally
+        window.uploadFile = function () {
+            // Get the file
+            const fileInput = document.getElementById("fileInput");
+            if (fileInput.files.length === 0) {
+                alert("Please select a file to upload.");
+                return;
+            }
+            const file = fileInput.files[0];
+
+            // Get the custom metadata from user input
+            const author = document.getElementById("authorInput").value;
+            const description = document.getElementById("descriptionInput").value;
+            const category = document.getElementById("categorySelect").value;
+
+            // Create a storage reference
+            const storageRef = ref(storage, 'files/' + file.name);
+
+            // Custom Metadata
+            const customMetadata = {
+                customMetadata: {
+                    'author': author,
+                    'description': description,
+                    'category': category
+                }
+            };
+
+            // Upload file and metadata
+            const uploadTask = uploadBytesResumable(storageRef, file, customMetadata);
+
+            // Monitor the upload process
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // Observe state change events such as progress, pause, and resume
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    document.getElementById('progress').innerText = 'Upload is ' + progress + '% done';
+                },
+                (error) => {
+                    // Handle unsuccessful uploads
+                    console.error('Upload failed:', error);
+                },
+                () => {
+                    // Handle successful uploads on complete
+                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                        console.log('File available at', downloadURL);
+                        listFiles(); // Refresh the file list after upload
+                    });
+                }
+            );
+        }
+
+        // Define the filterFiles function globally
+        window.filterFiles = function () {
+            const filterAuthor = document.getElementById("filterAuthorSelect").value;
+            const filterCategory = document.getElementById("filterCategorySelect").value;
+            listFiles(filterAuthor, filterCategory);
+        }
     </script>
 </head>
 
 <body>
-    <h1>Ajouter des Fichiers</h1>
-    <input type="file" id="fileInput" />
-    <button onclick="uploadFile()">Ajouter des fichiers</button>
-    <h2>Liste des fichiers ajoutés</h2>
-    <ul id="fileList"></ul>
+    <nav>
+        <a href="#landing">Home</a>
+        <a href="#upload">Upload</a>
+        <a href="#files">Files</a>
+    </nav>
+
+    <div class="landing" id="landing">
+        <h1>Welcome to Ely Cheikh's books</h1>
+        <p>Easily upload, manage, and filter your files with Firebase.</p>
+    </div>
+
+    <div class="container" id="upload">
+        <h1>Firebase File Upload with Metadata</h1>
+        <div class="section">
+            <h2>Filter Files</h2>
+            <label for="filterAuthorSelect">Filter by Author:</label>
+            <select id="filterAuthorSelect">
+                <option value="">All</option>
+                <!-- Options will be populated dynamically -->
+            </select><br><br>
+            <label for="filterCategorySelect">Filter by Category:</label>
+            <select id="filterCategorySelect">
+                <option value="">All</option>
+                <option value="religion">Religion</option>
+                <option value="historic">Historic</option>
+                <option value="art">Art</option>
+            </select><br><br>
+            <button onclick="filterFiles()">Apply Filter</button>
+        </div>
+        <div class="section">
+            <h2>Uploaded Files</h2>
+            <ul id="fileList"></ul>
+        </div>
+        <div class="section">
+            <h2>Upload a New File</h2>
+            <input type="file" id="fileInput"><br><br>
+            <label for="authorInput">Author:</label>
+            <input type="text" id="authorInput"><br><br>
+            <label for="descriptionInput">Description:</label>
+            <input type="text" id="descriptionInput"><br><br>
+            <label for="categorySelect">Category:</label>
+            <select id="categorySelect">
+                <option value="religion">Religion</option>
+                <option value="historic">Historic</option>
+                <option value="art">Art</option>
+            </select><br><br>
+            <button onclick="uploadFile()">Upload</button>
+            <div id="progress"></div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2024 Ely Cheikh . All rights reserved.
+    </footer>
 </body>
 
 </html>
