@@ -172,7 +172,7 @@
         const storage = getStorage(app);
 
         // Define the function to retrieve the list of files and populate authors
-        async function listFiles(filterAuthor = '', filterCategory = '') {
+        async function listFiles(filterAuthor = '', filterCategory = '', filterName = '') {
             const storageRef = ref(storage, 'files/');
             try {
                 const res = await listAll(storageRef);
@@ -183,10 +183,11 @@
                     const metadata = await getMetadata(itemRef);
                     const author = metadata.customMetadata?.author || '';
                     const category = metadata.customMetadata?.category || '';
+                    const name = itemRef.name;
 
                     authorSet.add(author);
 
-                    if ((filterAuthor && author !== filterAuthor) || (filterCategory && category !== filterCategory)) {
+                    if ((filterAuthor && author !== filterAuthor) || (filterCategory && category !== filterCategory) || (filterName && !name.includes(filterName))) {
                         continue;
                     }
 
@@ -275,7 +276,8 @@
         window.filterFiles = function () {
             const filterAuthor = document.getElementById("filterAuthorSelect").value;
             const filterCategory = document.getElementById("filterCategorySelect").value;
-            listFiles(filterAuthor, filterCategory);
+            const filterName = document.getElementById("filterNameInput").value;
+            listFiles(filterAuthor, filterCategory, filterName);
         }
     </script>
 </head>
@@ -294,6 +296,11 @@
 
     <div class="container" id="upload">
         <h1>Firebase File Upload with Metadata</h1>
+        <div class="section">
+            <h2>Search by Name</h2>
+            <input type="text" id="filterNameInput" placeholder="Enter file name"><br><br>
+            <button onclick="filterFiles()">Search</button>
+        </div>
         <div class="section">
             <h2>Filter Files</h2>
             <label for="filterAuthorSelect">Filter by Author:</label>
