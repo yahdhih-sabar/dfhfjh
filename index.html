@@ -178,6 +178,7 @@
                 const res = await listAll(storageRef);
                 const fileList = document.getElementById('fileList');
                 const authorSet = new Set();
+                const displayedFiles = new Set();
                 fileList.innerHTML = ''; // Clear the list first
                 for (const itemRef of res.items) {
                     const metadata = await getMetadata(itemRef);
@@ -190,6 +191,12 @@
                     if ((filterAuthor && author !== filterAuthor) || (filterCategory && category !== filterCategory) || (filterName && !name.toLowerCase().includes(filterName.toLowerCase()))) {
                         continue;
                     }
+
+                    if (displayedFiles.has(name)) {
+                        continue;
+                    }
+
+                    displayedFiles.add(name);
 
                     const downloadURL = await getDownloadURL(itemRef);
                     const listItem = document.createElement('li');
