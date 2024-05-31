@@ -187,7 +187,7 @@
 
                     authorSet.add(author);
 
-                    if ((filterAuthor && author !== filterAuthor) || (filterCategory && category !== filterCategory) || (filterName && !name.includes(filterName))) {
+                    if ((filterAuthor && author !== filterAuthor) || (filterCategory && category !== filterCategory) || (filterName && !name.toLowerCase().includes(filterName.toLowerCase()))) {
                         continue;
                     }
 
@@ -279,6 +279,17 @@
             const filterName = document.getElementById("filterNameInput").value;
             listFiles(filterAuthor, filterCategory, filterName);
         }
+
+        // Add event listener to search input
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const filterNameInput = document.getElementById('filterNameInput');
+            filterNameInput.addEventListener('input', () => {
+                const filterAuthor = document.getElementById("filterAuthorSelect").value;
+                const filterCategory = document.getElementById("filterCategorySelect").value;
+                const filterName = filterNameInput.value;
+                listFiles(filterAuthor, filterCategory, filterName);
+            });
+        });
     </script>
 </head>
 
@@ -299,7 +310,6 @@
         <div class="section">
             <h2>Search by Name</h2>
             <input type="text" id="filterNameInput" placeholder="Enter file name"><br><br>
-            <button onclick="filterFiles()">Search</button>
         </div>
         <div class="section">
             <h2>Filter Files</h2>
