@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f4f9ff;
             margin: 0;
             padding: 0;
             line-height: 1.6;
@@ -172,9 +172,14 @@
         const storage = getStorage(app);
 
         let activeRequest = null;
+        let lastRequestTimestamp = 0;
 
         // Define the function to retrieve the list of files and populate authors
-        async function listFiles(filterAuthor = '', filterCategory = '', filterName = '') {
+        async function listFiles(filterAuthor = '', filterCategory = '', filterName = '', requestTimestamp) {
+            if (requestTimestamp < lastRequestTimestamp) {
+                return;
+            }
+
             if (activeRequest) {
                 activeRequest.abort();
             }
@@ -190,7 +195,7 @@
                 const displayedFiles = new Set();
                 fileList.innerHTML = ''; // Clear the list first
                 for (const itemRef of res.items) {
-                    const metadata = await getMetadata(itemRef);
+                    const metadata = await getMetadata(itemRef, { signal: controller.signal });
                     const author = metadata.customMetadata?.author || '';
                     const category = metadata.customMetadata?.category || '';
                     const name = itemRef.name;
@@ -207,7 +212,7 @@
 
                     displayedFiles.add(name);
 
-                    const downloadURL = await getDownloadURL(itemRef);
+                    const downloadURL = await getDownloadURL(itemRef, { signal: controller.signal });
                     const listItem = document.createElement('li');
                     listItem.textContent = `${itemRef.name} (Author: ${author}, Category: ${category})`;
                     const link = document.createElement('a');
@@ -243,7 +248,7 @@
         }
 
         // Call the listFiles function to display the list of files on page load
-        window.onload = () => listFiles();
+        window.onload = () => listFiles('', '', '', Date.now());
 
         // Define the uploadFile function globally
         window.uploadFile = function () {
@@ -311,7 +316,9 @@
             const filterAuthor = document.getElementById("filterAuthorSelect").value;
             const filterCategory = document.getElementById("filterCategorySelect").value;
             const filterName = document.getElementById("filterNameInput").value;
-            listFiles(filterAuthor, filterCategory, filterName);
+            const requestTimestamp = Date.now();
+            lastRequestTimestamp = requestTimestamp;
+            listFiles(filterAuthor, filterCategory, filterName, requestTimestamp);
         }
 
         // Add event listener to search input with debounce
@@ -321,7 +328,9 @@
                 const filterAuthor = document.getElementById("filterAuthorSelect").value;
                 const filterCategory = document.getElementById("filterCategorySelect").value;
                 const filterName = filterNameInput.value;
-                listFiles(filterAuthor, filterCategory, filterName);
+                const requestTimestamp = Date.now();
+                lastRequestTimestamp = requestTimestamp;
+                listFiles(filterAuthor, filterCategory, filterName, requestTimestamp);
             }, 300);
 
             filterNameInput.addEventListener('input', debouncedFilterFiles);
