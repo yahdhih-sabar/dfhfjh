@@ -192,6 +192,29 @@
         let activeRequest = null;
         let lastRequestTimestamp = 0;
 
+        // Function to generate thumbnail for PDF files
+        async function getPdfThumbnail(url) {
+            try {
+                const pdf = await pdfjsLib.getDocument(url).promise;
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 1 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                return canvas.toDataURL();
+            } catch (error) {
+                console.error('Error generating PDF thumbnail:', error);
+                return '';
+            }
+        }
+
         // Define the function to retrieve the list of files and populate categories
         async function listFiles(filterCategory = '', filterName = '', requestTimestamp) {
             if (requestTimestamp < lastRequestTimestamp) {
@@ -325,24 +348,6 @@
                     });
                 }
             );
-        }
-
-        // Function to generate thumbnail for PDF files
-        async function getPdfThumbnail(url) {
-            const pdf = await pdfjsLib.getDocument(url).promise;
-            const page = await pdf.getPage(1);
-            const viewport = page.getViewport({ scale: 1 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-
-            return canvas.toDataURL();
         }
 
         // Define the debounce function
