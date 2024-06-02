@@ -294,7 +294,7 @@
                     // Handle successful uploads on complete
                     getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                         console.log('File available at', downloadURL);
-                        listFiles(); // Refresh the file list after upload
+                        listFiles('', '', Date.now()); // Refresh the file list after upload
                     });
                 }
             );
