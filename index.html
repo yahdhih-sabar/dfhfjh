@@ -103,27 +103,38 @@
             font-weight: bold;
         }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        li {
-            padding: 10px;
+        .file-item {
             background-color: #f9f9f9;
-            margin-bottom: 10px;
             border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            width: calc(33.333% - 20px);
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .file-item:hover {
+            transform: scale(1.05);
+        }
+
+        .file-thumbnail {
+            max-width: 100%;
+            height: auto;
             border-radius: 4px;
         }
 
-        li a {
-            color: #007bff;
-            text-decoration: none;
-            margin-left: 10px;
-        }
-
-        li a:hover {
-            text-decoration: underline;
+        .file-details {
+            display: none;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #555;
         }
 
         footer {
@@ -147,6 +158,10 @@
             nav a {
                 display: block;
                 margin: 5px 0;
+            }
+
+            .file-item {
+                width: calc(50% - 20px);
             }
         }
     </style>
@@ -198,6 +213,7 @@
                     const metadata = await getMetadata(itemRef, { signal: controller.signal });
                     const category = metadata.customMetadata?.category || '';
                     const name = itemRef.name;
+                    const description = metadata.customMetadata?.description || '';
 
                     categorySet.add(category);
 
@@ -212,12 +228,20 @@
                     displayedFiles.add(name);
 
                     const downloadURL = await getDownloadURL(itemRef, { signal: controller.signal });
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${itemRef.name} (Category: ${category})`;
-                    const link = document.createElement('a');
-                    link.href = downloadURL;
-                    link.textContent = ' (Download)';
-                    listItem.appendChild(link);
+                    const listItem = document.createElement('div');
+                    listItem.className = 'file-item';
+                    listItem.innerHTML = `
+                        <img src="${downloadURL}" alt="${name}" class="file-thumbnail">
+                        <div class="file-details">
+                            <p><strong>Name:</strong> ${name}</p>
+                            <p><strong>Category:</strong> ${category}</p>
+                            <p><strong>Description:</strong> ${description}</p>
+                        </div>
+                    `;
+                    listItem.addEventListener('click', () => {
+                        const details = listItem.querySelector('.file-details');
+                        details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                    });
                     fileList.appendChild(listItem);
                 }
                 populateCategoryFilter(categorySet);
@@ -367,7 +391,7 @@
         </div>
         <div class="section">
             <h2>Uploaded Files</h2>
-            <ul id="fileList"></ul>
+            <div id="fileList" class="file-list"></div>
         </div>
         <div class="section">
             <h2>Upload a New File</h2>
