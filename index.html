@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Firebase File Upload with Metadata</title>
     <style>
+        /* Your existing CSS */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f9ff;
@@ -321,29 +322,42 @@
         window.onload = () => listFiles('', '', Date.now());
 
         // Define the uploadFile function globally
-        window.uploadFile = function () {
-            // Get the file
+        window.uploadFile = async function () {
+            // Get the file and the cover image
             const fileInput = document.getElementById("fileInput");
+            const coverInput = document.getElementById("coverInput");
+
             if (fileInput.files.length === 0) {
                 alert("Please select a file to upload.");
                 return;
             }
+
             const file = fileInput.files[0];
+            let coverURL = '';
 
             // Get the custom metadata from user input
             const author = document.getElementById("authorInput").value;
             const description = document.getElementById("descriptionInput").value;
             const category = document.getElementById("categorySelect").value;
 
-            // Create a storage reference
+            // Create a storage reference for the file
             const storageRef = ref(storage, 'files/' + file.name);
+
+            // Upload the cover image if provided
+            if (coverInput.files.length > 0) {
+                const coverFile = coverInput.files[0];
+                const coverRef = ref(storage, 'covers/' + coverFile.name);
+                const coverSnapshot = await uploadBytesResumable(coverRef, coverFile);
+                coverURL = await getDownloadURL(coverSnapshot.ref);
+            }
 
             // Custom Metadata
             const customMetadata = {
                 customMetadata: {
                     'author': author,
                     'description': description,
-                    'category': category
+                    'category': category,
+                    'coverURL': coverURL
                 }
             };
 
@@ -443,6 +457,8 @@
         <div class="section">
             <h2>Upload a New File</h2>
             <input type="file" id="fileInput"><br><br>
+            <label for="coverInput">Book Cover:</label>
+            <input type="file" id="coverInput"><br><br>
             <label for="authorInput">Author:</label>
             <input type="text" id="authorInput"><br><br>
             <label for="descriptionInput">Description:</label>
