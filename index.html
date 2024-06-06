@@ -103,27 +103,71 @@
             font-weight: bold;
         }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
-        li {
-            padding: 10px;
+        .file-box {
             background-color: #f9f9f9;
-            margin-bottom: 10px;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            width: calc(33.333% - 20px);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        li a {
-            color: #007bff;
+        .file-box img {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .file-box .book-icon {
+            width: 100px;
+            height: 150px;
+            background-color: #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .file-box .file-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .file-box .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .file-box .buttons a,
+        .file-box .buttons button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
             text-decoration: none;
-            margin-left: 10px;
+            text-align: center;
+            display: inline-block;
         }
 
-        li a:hover {
-            text-decoration: underline;
+        .file-box .buttons a:hover,
+        .file-box .buttons button:hover {
+            background-color: #0056b3;
         }
 
         footer {
@@ -147,6 +191,10 @@
             nav a {
                 display: block;
                 margin: 5px 0;
+            }
+
+            .file-box {
+                width: calc(50% - 20px);
             }
         }
     </style>
@@ -212,12 +260,35 @@
                     displayedFiles.add(name);
 
                     const downloadURL = await getDownloadURL(itemRef, { signal: controller.signal });
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${itemRef.name} (Category: ${category})`;
-                    const link = document.createElement('a');
-                    link.href = downloadURL;
-                    link.textContent = ' (Download)';
-                    listItem.appendChild(link);
+                    
+                    const coverURL = metadata.customMetadata?.coverURL || '';
+                    const listItem = document.createElement('div');
+                    listItem.className = 'file-box';
+                    
+                    const coverImg = document.createElement('img');
+                    coverImg.src = coverURL || 'path/to/default/book-icon.png';
+                    coverImg.alt = 'Book Cover';
+                    listItem.appendChild(coverImg);
+
+                    const fileName = document.createElement('div');
+                    fileName.className = 'file-name';
+                    fileName.textContent = name;
+                    listItem.appendChild(fileName);
+
+                    const buttonsDiv = document.createElement('div');
+                    buttonsDiv.className = 'buttons';
+
+                    const readButton = document.createElement('a');
+                    readButton.href = downloadURL;
+                    readButton.textContent = 'Read';
+                    buttonsDiv.appendChild(readButton);
+
+                    const downloadButton = document.createElement('a');
+                    downloadButton.href = downloadURL;
+                    downloadButton.textContent = 'Download';
+                    buttonsDiv.appendChild(downloadButton);
+
+                    listItem.appendChild(buttonsDiv);
                     fileList.appendChild(listItem);
                 }
                 populateCategoryFilter(categorySet);
@@ -367,7 +438,7 @@
         </div>
         <div class="section">
             <h2>Uploaded Files</h2>
-            <ul id="fileList"></ul>
+            <div class="file-list" id="fileList"></div>
         </div>
         <div class="section">
             <h2>Upload a New File</h2>
@@ -392,4 +463,5 @@
         &copy; 2024 Ely Cheikh. All rights reserved.
     </footer>
 </body>
+
 </html>
