@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase File Upload</title>
+    <title>FBU</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -104,11 +104,11 @@
         }
 
         .file-list {
-            display: flex;
-            flex-direction: column; /* Changed to column for better vertical scrolling */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            max-height: 600px; /* Increased height */
-            overflow-y: auto; /* Only vertical scrolling */
+            max-height: 600px;
+            overflow-y: auto;
         }
 
         .file-box {
@@ -116,11 +116,16 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            width: 100%; /* Full width */
-            box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .file-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
         .file-box img {
@@ -128,12 +133,14 @@
             height: 150px;
             object-fit: cover;
             margin-bottom: 10px;
+            border-radius: 4px;
         }
 
         .file-box .file-name {
             font-weight: bold;
             margin-bottom: 10px;
             text-align: center;
+            color: #333;
         }
 
         .file-box .buttons {
@@ -151,6 +158,7 @@
             text-decoration: none;
             text-align: center;
             display: inline-block;
+            transition: background-color 0.3s ease;
         }
 
         .file-box .buttons a:hover,
@@ -268,11 +276,11 @@
                     displayedFiles.add(name);
 
                     const downloadURL = await getDownloadURL(itemRef, { signal: controller.signal });
-                    
+
                     const coverURL = metadata.customMetadata?.coverURL || '';
                     const listItem = document.createElement('div');
                     listItem.className = 'file-box';
-                    
+
                     const coverImg = document.createElement('img');
                     coverImg.src = coverURL || 'https://firebasestorage.googleapis.com/v0/b/firo-29128.appspot.com/o/covers%2Fbook%20icon.png?alt=media&token=c53857c0-117d-4c5d-b441-28b42273be0f';
                     coverImg.alt = 'Book Cover';
