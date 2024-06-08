@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Firebase File Upload</title>
     <style>
-        /* Your existing CSS */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f9ff;
@@ -106,10 +105,10 @@
 
         .file-list {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column; /* Changed to column for better vertical scrolling */
             gap: 20px;
             max-height: 600px; /* Increased height */
-            overflow-y: auto;
+            overflow-y: auto; /* Only vertical scrolling */
         }
 
         .file-box {
@@ -117,7 +116,7 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            width: calc(50% - 20px);
+            width: 100%; /* Full width */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -128,18 +127,6 @@
             width: 100%;
             height: 150px;
             object-fit: cover;
-            margin-bottom: 10px;
-        }
-
-        .file-box .book-icon {
-            width: 100px;
-            height: 150px;
-            background-color: #ccc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2em;
-            color: #fff;
             margin-bottom: 10px;
         }
 
@@ -171,6 +158,31 @@
             background-color: #0056b3;
         }
 
+        .author-section {
+            background-color: #e0f7fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .author-section img {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .author-section h2 {
+            margin: 10px 0;
+            color: #007bff;
+        }
+
+        .author-section p {
+            color: #555;
+        }
+
         footer {
             background-color: #007bff;
             color: #fff;
@@ -195,17 +207,14 @@
             }
 
             .file-box {
-                width: calc(50% - 20px);
+                width: 100%;
             }
         }
     </style>
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.8.1/firebase-app.js";
         import { getStorage, ref, listAll, getDownloadURL, uploadBytesResumable, getMetadata } from "https://www.gstatic.com/firebasejs/9.8.1/firebase-storage.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAkll0uPJT7dKH-jVMGktrcYFWqSoSRLZc",
             authDomain: "firo-29128.firebaseapp.com",
@@ -216,14 +225,12 @@
             measurementId: "G-MDRPD4YBJ5"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
         let activeRequest = null;
         let lastRequestTimestamp = 0;
 
-        // Define the function to retrieve the list of files and populate categories
         async function listFiles(filterCategory = '', filterName = '', requestTimestamp) {
             if (requestTimestamp < lastRequestTimestamp) {
                 return;
@@ -242,7 +249,7 @@
                 const fileList = document.getElementById('fileList');
                 const categorySet = new Set();
                 const displayedFiles = new Set();
-                fileList.innerHTML = ''; // Clear the list first
+                fileList.innerHTML = '';
                 for (const itemRef of res.items) {
                     const metadata = await getMetadata(itemRef, { signal: controller.signal });
                     const category = metadata.customMetadata?.category || '';
@@ -306,10 +313,9 @@
             }
         }
 
-        // Populate category filter dropdown
         function populateCategoryFilter(categories) {
             const filterCategorySelect = document.getElementById('filterCategorySelect');
-            filterCategorySelect.innerHTML = '<option value="">All</option>'; // Add "All" option
+            filterCategorySelect.innerHTML = '<option value="">All</option>';
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -318,12 +324,9 @@
             });
         }
 
-        // Call the listFiles function to display the list of files on page load
         window.onload = () => listFiles('', '', Date.now());
 
-        // Define the uploadFile function globally
         window.uploadFile = async function () {
-            // Get the file and the cover image
             const fileInput = document.getElementById("fileInput");
             const coverInput = document.getElementById("coverInput");
 
@@ -335,15 +338,12 @@
             const file = fileInput.files[0];
             let coverURL = '';
 
-            // Get the custom metadata from user input
             const author = document.getElementById("authorInput").value;
             const description = document.getElementById("descriptionInput").value;
             const category = document.getElementById("categorySelect").value;
 
-            // Create a storage reference for the file
             const storageRef = ref(storage, 'files/' + file.name);
 
-            // Upload the cover image if provided
             if (coverInput.files.length > 0) {
                 const coverFile = coverInput.files[0];
                 const coverRef = ref(storage, 'covers/' + coverFile.name);
@@ -351,7 +351,6 @@
                 coverURL = await getDownloadURL(coverSnapshot.ref);
             }
 
-            // Custom Metadata
             const customMetadata = {
                 customMetadata: {
                     'author': author,
@@ -361,27 +360,21 @@
                 }
             };
 
-            // Upload file and metadata
             const uploadTask = uploadBytesResumable(storageRef, file, customMetadata);
 
-            // Monitor the upload process
             uploadTask.on('state_changed',
                 (snapshot) => {
-                    // Observe state change events such as progress, pause, and resume
                     const progress = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
                     document.getElementById('progress').innerText = 'Upload is ' + progress + '% done';
                 },
                 (error) => {
-                    // Handle unsuccessful uploads
                     console.error('Upload failed:', error);
                 },
                 async () => {
-                    // Handle successful uploads on complete
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                     console.log('File available at', downloadURL);
-                    listFiles(); // Refresh the file list after upload
+                    listFiles();
 
-                    // Clear input fields and progress
                     document.getElementById("fileInput").value = "";
                     document.getElementById("coverInput").value = "";
                     document.getElementById("authorInput").value = "";
@@ -389,13 +382,11 @@
                     document.getElementById("categorySelect").value = "";
                     document.getElementById('progress').innerText = '';
 
-                    // Show notification
                     alert("Upload successful!");
                 }
             );
         }
 
-        // Define the debounce function
         function debounce(func, wait) {
             let timeout;
             return function(...args) {
@@ -405,7 +396,6 @@
             };
         }
 
-        // Define the filterFiles function globally
         window.filterFiles = function () {
             const filterCategory = document.getElementById("filterCategorySelect").value;
             const filterName = document.getElementById("filterNameInput").value;
@@ -414,7 +404,6 @@
             listFiles(filterCategory, filterName, requestTimestamp);
         }
 
-        // Add event listener to search input with debounce
         window.addEventListener('DOMContentLoaded', (event) => {
             const filterNameInput = document.getElementById('filterNameInput');
             const debouncedFilterFiles = debounce(() => {
@@ -463,6 +452,11 @@
         <div class="section">
             <h2>Uploaded Files</h2>
             <div class="file-list" id="fileList"></div>
+        </div>
+        <div class="author-section">
+            <img src="path_to_author_image.jpg" alt="Author Image">
+            <h2>About the Author</h2>
+            <p>Author description goes here...</p>
         </div>
         <div class="section">
             <h2>Upload a New File</h2>
