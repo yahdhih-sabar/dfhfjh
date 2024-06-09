@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f9ff;
+            background-color: #f0f8ff;
             margin: 0;
             padding: 0;
             line-height: 1.6;
@@ -18,10 +18,26 @@
         }
 
         nav {
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: #fff;
-            padding: 10px;
-            text-align: center;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        nav .menu {
+            display: none;
+        }
+
+        nav .menu-icon {
+            display: block;
+            cursor: pointer;
         }
 
         nav a {
@@ -35,6 +51,16 @@
             text-decoration: underline;
         }
 
+        @media (min-width: 600px) {
+            nav .menu {
+                display: block;
+            }
+
+            nav .menu-icon {
+                display: none;
+            }
+        }
+
         .landing {
             background-color: #e0f7fa;
             padding: 60px 20px;
@@ -44,7 +70,7 @@
         .landing h1 {
             margin: 0;
             font-size: 3em;
-            color: #007bff;
+            color: #4CAF50;
         }
 
         .landing p {
@@ -86,7 +112,7 @@
         button {
             display: inline-block;
             padding: 10px 20px;
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: #fff;
             border: none;
             border-radius: 4px;
@@ -95,7 +121,7 @@
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #45a049;
         }
 
         #progress {
@@ -142,7 +168,7 @@
             margin-bottom: 10px;
             text-align: center;
             color: #333;
-            white-space: no-wrap;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             width: calc(100% - 10px);
@@ -155,7 +181,7 @@
 
         .file-box .buttons a,
         .file-box .buttons button {
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: #fff;
             padding: 5px 10px;
             border: none;
@@ -168,7 +194,7 @@
 
         .file-box .buttons a:hover,
         .file-box .buttons button:hover {
-            background-color: #0056b3;
+            background-color: #45a049;
         }
 
         .author-section {
@@ -189,7 +215,7 @@
 
         .author-section h2 {
             margin: 10px 0;
-            color: #007bff;
+            color: #4CAF50;
         }
 
         .author-section p {
@@ -197,7 +223,7 @@
         }
 
         footer {
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: #fff;
             text-align: center;
             padding: 10px 0;
@@ -207,11 +233,6 @@
         @media (max-width: 600px) {
             .landing h1 {
                 font-size: 2em;
-            }
-
-            nav {
-                text-align: left;
-                padding: 10px 20px;
             }
 
             nav a {
@@ -302,6 +323,7 @@
                     const readButton = document.createElement('a');
                     readButton.href = downloadURL;
                     readButton.textContent = 'Read';
+                    readButton.target = '_blank';
                     buttonsDiv.appendChild(readButton);
 
                     const downloadButton = document.createElement('a');
@@ -434,9 +456,13 @@
 
 <body>
     <nav>
-        <a href="#landing">Home</a>
-        <a href="#upload">Upload</a>
-        <a href="#files">Files</a>
+        <div class="logo">Ely Cheikh's Books</div>
+        <div class="menu">
+            <a href="#landing">Home</a>
+            <a href="#upload">Upload</a>
+            <a href="#files">Files</a>
+        </div>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
     </nav>
 
     <div class="landing" id="landing">
@@ -495,6 +521,12 @@
     <footer>
         &copy; 2024 Ely Cheikh. All rights reserved.
     </footer>
+    <script>
+        function toggleMenu() {
+            const menu = document.querySelector('nav .menu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
 </body>
 
 </html>
