@@ -107,8 +107,9 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            max-height: 800px;
+            max-height: 600px;
             overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .file-box {
@@ -144,7 +145,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: 100% - 10px;
+            width: calc(100% - 10px);
         }
 
         .file-box .buttons {
